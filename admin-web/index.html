@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cape Noor Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Header -->
+        <header class="admin-header">
+            <div class="header-content">
+                <h1 class="logo">🕌 Cape Noor Admin</h1>
+                <div class="header-actions">
+                    <span class="user-info">
+                        <span id="logged-user">Admin</span>
+                    </span>
+                    <button id="logout-btn" class="btn btn-secondary">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="admin-nav">
+            <ul>
+                <li><a href="#" class="nav-link active" data-section="users">👥 Users</a></li>
+                <li><a href="#" class="nav-link" data-section="mosques">🕋 Mosques</a></li>
+                <li><a href="#" class="nav-link" data-section="pending">⏳ Pending Changes</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Users Section -->
+            <section id="users-section" class="section active">
+                <div class="section-header">
+                    <h2>Admin Users</h2>
+                    <button id="create-user-btn" class="btn btn-primary">+ Create User</button>
+                </div>
+
+                <!-- Users List Table -->
+                <div class="table-container">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Mosques</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-tbody">
+                            <tr class="loading">
+                                <td colspan="7">Loading users...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination">
+                    <button id="prev-page" class="btn btn-secondary" disabled>← Previous</button>
+                    <span id="page-info">Page 1</span>
+                    <button id="next-page" class="btn btn-secondary" disabled>Next →</button>
+                </div>
+            </section>
+
+            <!-- Mosques Section -->
+            <section id="mosques-section" class="section">
+                <div class="section-header">
+                    <h2>Mosques</h2>
+                </div>
+                <div class="placeholder">
+                    <p>Mosque management coming soon...</p>
+                </div>
+            </section>
+
+            <!-- Pending Changes Section -->
+            <section id="pending-section" class="section">
+                <div class="section-header">
+                    <h2>Pending Changes</h2>
+                </div>
+                <div class="placeholder">
+                    <p>Pending changes management coming soon...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals -->
+
+    <!-- Create/Edit User Modal -->
+    <div id="user-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Create New User</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="user-form">
+                <div class="form-group">
+                    <label for="user-username">Username *</label>
+                    <input type="text" id="user-username" name="username" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="user-email">Email *</label>
+                    <input type="email" id="user-email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="user-password">Password *</label>
+                    <input type="password" id="user-password" name="password" required>
+                    <small>Leave empty to keep current password when editing</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="user-role">Role *</label>
+                    <select id="user-role" name="role" required>
+                        <option value="">Select a role</option>
+                        <option value="super_admin">Super Admin</option>
+                        <option value="mosque_admin">Mosque Admin</option>
+                        <option value="maintainer">Maintainer</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="user-status">Active</label>
+                    <input type="checkbox" id="user-status" name="is_active">
+                </div>
+
+                <!-- Mosque Assignments -->
+                <fieldset class="assignments-fieldset">
+                    <legend>Mosque Assignments</legend>
+                    <div id="assignments-container" class="assignments-container">
+                        <p class="loading-text">Loading mosques...</p>
+                    </div>
+                    <button type="button" id="add-assignment-btn" class="btn btn-secondary">
+                        + Add Assignment
+                    </button>
+                </fieldset>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save User</button>
+                    <button type="reset" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal active">
+        <div class="modal-content login-modal">
+            <div class="modal-header">
+                <h3>Cape Noor Admin Login</h3>
+            </div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-username">Username</label>
+                    <input type="text" id="login-username" name="username" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" name="password" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">Login</button>
+                <div id="login-error" class="error-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Action</h3>
+            </div>
+            <p id="confirm-message"></p>
+            <div class="form-actions">
+                <button id="confirm-yes" class="btn btn-danger">Delete</button>
+                <button id="confirm-no" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="auth.js"></script>
+    <script src="api.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

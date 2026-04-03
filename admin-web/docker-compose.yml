@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  admin-web:
+    build: ./admin-web
+    ports:
+      - "8081:80"
+    environment:
+      - API_BASE_URL=http://localhost:8080/api
+    networks:
+      - cape-noor
+
+  # Optional: If deploying with the API
+  api:
+    image: php:8.1-fpm
+    volumes:
+      - ./api:/var/www/html
+    ports:
+      - "8080:9000"
+    networks:
+      - cape-noor
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=cape_noor
+      - DB_PASS=cape_noor_password
+      - DB_NAME=cape_noor
+      - JWT_SECRET=your-secret-key-here
+
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROO_PASSWORD=root_password
+      - MYSQL_DATABASE=cape_noor
+      - MYSQL_USER=cape_noor
+      - MYSQL_PASSWORD=cape_noor_password
+    networks:
+      - cape-noor
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+networks:
+  cape-noor:
+    driver: bridge
+
+volumes:
+  mysql_data:
