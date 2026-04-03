@@ -1,0 +1,105 @@
+name: cape_noor
+description: Cape Noor — Full Islamic Companion App
+publish_to: none
+version: 2.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Navigation
+  go_router: ^14.6.2
+
+  # Networking
+  dio: ^5.7.0
+
+  # Local database (offline-first)
+  drift: ^2.21.0
+  sqlite3_flutter_libs: ^0.5.28
+  path: ^1.9.0
+  path_provider: ^2.1.4
+
+  # Secure token storage
+  flutter_secure_storage: ^9.2.2
+
+  # Firebase
+  firebase_core: ^3.9.0
+  firebase_messaging: ^15.1.5
+
+  # Local notifications with timezone scheduling
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.9.4
+
+  # Audio playback (Quran + Adhan)
+  just_audio: ^0.9.43
+  audio_session: ^0.1.21
+
+  # Qibla compass
+  flutter_qiblah: ^3.1.0+1
+  geolocator: ^13.0.2
+  permission_handler: ^11.3.1
+
+  # Prayer time calculation (Dart port)
+  adhan: ^2.0.0+1
+
+  # Hijri calendar
+  hijri: ^3.0.0
+
+  # UI utilities
+  cached_network_image: ^3.4.1
+  flutter_animate: ^4.5.0
+  shimmer: ^3.0.0
+  intl: ^0.20.1
+  url_launcher: ^6.3.0
+  share_plus: ^10.1.2
+
+  # Haptic feedback + sensors
+  vibration: ^2.0.0
+
+  # Local key-value storage (settings, prayer tracker)
+  shared_preferences: ^2.3.0
+
+  # App icon & splash
+  flutter_svg: ^2.0.10+1
+
+  # HTTP (used by FCM subscription)
+  http: ^1.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.3
+  drift_dev: ^2.21.0
+  build_runner: ^2.4.13
+  riverpod_generator: ^2.6.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/duas/duas.json
+    - assets/images/logo.png
+    - assets/images/kaaba.svg
+
+  fonts:
+    - family: Amiri
+      fonts:
+        - asset: assets/fonts/Amiri-Regular.ttf
+        - asset: assets/fonts/Amiri-Bold.ttf
+          weight: 700
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/icons/app_icon.png
+  adaptive_icon_background: "#0A0F1A"
+  adaptive_icon_foreground: assets/icons/app_icon.png
+  remove_alpha_ios: true
