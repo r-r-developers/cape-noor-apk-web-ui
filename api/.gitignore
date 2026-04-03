@@ -1,0 +1,29 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Secrets and credentials
+/secrets/
+*.json
+
+# Dependencies
+/vendor/
+composer.lock
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build and cache
+/cache/
+/build/
+*.log
