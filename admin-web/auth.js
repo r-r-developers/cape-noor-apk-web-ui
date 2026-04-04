@@ -39,54 +39,77 @@ class AuthManager {
     }
 
     async login(username, password) {
-        try {
-            const response = await fetch(`${CONFIG.API_BASE_URL}/v2/admin/auth/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username, password })
-            });
+        let lastError = null;
 
-            const data = await response.json();
+        for (const base of window.getApiBaseCandidates()) {
+            try {
+                const response = await fetch(`${base}/v2/auth/admin/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
 
-            if (!response.ok) {
-                throw new Error(data.message || 'Login failed');
+                const data = await response.json();
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        lastError = new Error('API login route not found for current base path');
+                        continue;
+                    }
+                    throw new Error(data.error || 'Login failed');
+                }
+
+                window.setResolvedApiBase?.(base);
+                this.setTokens(data.tokens.access_token, data.tokens.refresh_token);
+                this.setUser(data.user);
+
+                return { success: true, user: data.user };
+            } catch (error) {
+                lastError = error;
             }
-
-            this.setTokens(data.accessToken, data.refreshToken);
-            this.setUser(data.user);
-            
-            return { success: true, user: data.user };
-        } catch (error) {
-            console.error('Login error:', error);
-            throw error;
         }
+
+        console.error('Login error:', lastError);
+        throw lastError || new Error('Login failed');
     }
 
     async refreshAccessToken() {
-        try {
-            const response = await fetch(`${CONFIG.API_BASE_URL}/v2/admin/auth/refresh`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ refreshToken: this.refreshToken })
-            });
+        let lastError = null;
+        const bases = [window.getResolvedApiBase?.(), ...window.getApiBaseCandidates()].filter(Boolean);
 
-            const data = await response.json();
+        for (const base of [...new Set(bases)]) {
+            try {
+                const response = await fetch(`${base}/v2/auth/refresh`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ refresh_token: this.refreshToken })
+                });
 
-            if (!response.ok) {
-                this.logout();
-                throw new Error('Token refresh failed');
+                const data = await response.json();
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        lastError = new Error('API refresh route not found for current base path');
+                        continue;
+                    }
+                    this.logout();
+                    throw new Error('Token refresh failed');
+                }
+
+                window.setResolvedApiBase?.(base);
+                this.setTokens(data.tokens.access_token, data.tokens.refresh_token);
+                return true;
+            } catch (error) {
+                lastError = error;
             }
-
-            this.setTokens(data.accessToken, data.refreshToken);
-            return true;
-        } catch (error) {
-            console.error('Token refresh error:', error);
-            return false;
         }
+
+        console.error('Token refresh error:', lastError);
+        return false;
     }
 }
 

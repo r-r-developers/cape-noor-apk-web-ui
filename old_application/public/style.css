@@ -1,0 +1,513 @@
+/* ── RESET & BASE ─────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg:           #0a0f1a;
+  --card-bg:      #111827;
+  --card-border:  #1e293b;
+  --green:        #22c55e;
+  --green-dim:    rgba(34, 197, 94, 0.15);
+  --gold:         #d4af37;
+  --gold-dim:     rgba(212, 175, 55, 0.18);
+  --gold-text:    #fbbf24;
+  --text:         #f1f5f9;
+  --text-muted:   #94a3b8;
+  --text-faint:   #475569;
+  --error:        #ef4444;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  overflow: hidden; /* Prevent scrolling on TV displays */
+}
+
+/* ── 3-COLUMN GRID LAYOUT ────────────────────────────────────────────────── */
+.app-grid {
+  display: grid;
+  grid-template-columns: 25% 1fr 25%;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+/* Full-screen mode: hide both sidebars */
+.no-sidebars .app-grid {
+  grid-template-columns: 1fr;
+}
+.no-sidebars .sponsors-sidebar {
+  display: none !important;
+}
+
+.sponsors-sidebar {
+  background: color-mix(in srgb, var(--bg) 70%, white 30%);
+  border-left: 1px solid var(--card-border);
+  border-right: 1px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  overflow: hidden;
+}
+
+.sponsor-display {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sponsor-display img {
+  max-width: 100%;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.main-column {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 2rem;
+  max-height: 100vh;
+}
+
+#app {
+  /* Legacy selector - now handled by .app-grid */
+}
+
+/* ── HEADER ───────────────────────────────────────────────────────────────── */
+.site-header {
+  text-align: center;
+  padding: 1.5rem 0 1rem;
+  border-bottom: 1px solid var(--card-border);
+  margin-bottom: 1.5rem;
+}
+
+.site-title {
+  font-family: 'Amiri', serif;
+  font-size: 2.2rem;
+  color: var(--gold);
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+}
+
+.site-subtitle-en {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-top: 0.4rem;
+}
+
+.live-clock {
+  color: var(--text-faint);
+  font-size: 0.8rem;
+  margin-top: 0.6rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── STATE MESSAGES ───────────────────────────────────────────────────────── */
+.state-message {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 3rem 1rem;
+  font-size: 1rem;
+}
+
+.state-error {
+  color: var(--error);
+}
+
+/* ── SECTIONS ─────────────────────────────────────────────────────────────── */
+.section {
+  margin-bottom: 2.5rem;
+}
+
+.section-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-faint);
+  margin-bottom: 1rem;
+  padding-left: 0.25rem;
+}
+
+/* ── COUNTDOWN ────────────────────────────────────────────────────────────── */
+.countdown-section {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  margin-bottom: 1.5rem;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+}
+
+.next-label {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 0.6rem;
+}
+
+.countdown {
+  font-size: 3rem;
+  font-weight: 600;
+  color: var(--green);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+/* ── PRAYER GRID ──────────────────────────────────────────────────────────── */
+.prayer-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.75rem;
+}
+
+.prayer-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 1.25rem 0.75rem;
+  text-align: center;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.prayer-name {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 0.6rem;
+}
+
+.prayer-time {
+  font-size: 1.55rem;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Current prayer — gold */
+.prayer-card.is-current {
+  border-color: var(--gold);
+  box-shadow: 0 0 20px var(--gold-dim);
+}
+
+.prayer-card.is-current .prayer-name {
+  color: var(--gold);
+}
+
+.prayer-card.is-current .prayer-time {
+  color: var(--gold-text);
+}
+
+/* Next prayer — green */
+.prayer-card.is-next {
+  border-color: var(--green);
+  box-shadow: 0 0 20px var(--green-dim);
+}
+
+.prayer-card.is-next .prayer-name {
+  color: var(--green);
+}
+
+.prayer-card.is-next .prayer-time {
+  color: var(--text);
+}
+
+/* ── FASTING ──────────────────────────────────────────────────────────────── */
+.fasting-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.fasting-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 1.75rem 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.fasting-icon {
+  font-size: 1.4rem;
+  margin-bottom: 0.25rem;
+}
+
+.fasting-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.fasting-time {
+  font-size: 2.2rem;
+  font-weight: 600;
+  color: var(--gold-text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.fasting-note {
+  font-size: 0.7rem;
+  color: var(--text-faint);
+}
+
+/* ── ALERTS BUTTON ────────────────────────────────────────────────────────── */
+.alerts-section {
+  text-align: center;
+}
+
+.alerts-btn {
+  display: inline-block;
+  padding: 0.8rem 2.25rem;
+  border: 2px solid var(--green);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--green);
+  font-size: 0.95rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  letter-spacing: 0.02em;
+}
+
+.alerts-btn:hover {
+  background: var(--green);
+  color: var(--bg);
+  box-shadow: 0 0 16px var(--green-dim);
+}
+
+.alerts-btn.is-active {
+  background: var(--green);
+  color: var(--bg);
+  box-shadow: 0 0 16px var(--green-dim);
+}
+
+.alerts-desc {
+  color: var(--text-faint);
+  font-size: 0.75rem;
+  margin-top: 0.6rem;
+}
+
+/* ── ALERT TOAST BANNER ───────────────────────────────────────────────────── */
+.alert-banner {
+  position: fixed;
+  top: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--gold);
+  color: #0a0f1a;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.75rem 1.75rem;
+  border-radius: 10px;
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4);
+}
+
+.alert-banner.visible {
+  opacity: 1;
+}
+
+/* ── RESPONSIVE ───────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .site-title {
+    font-size: 2rem;
+  }
+
+  .countdown {
+    font-size: 2.8rem;
+  }
+
+  .prayer-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+  }
+
+  /* Push Isha to the center of the second row on mobile */
+  .prayer-grid .prayer-card:last-child {
+    grid-column: 2;
+  }
+
+  .prayer-time {
+    font-size: 1.25rem;
+  }
+
+  .fasting-time {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .prayer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .prayer-grid .prayer-card:last-child {
+    grid-column: span 2;
+  }
+}
+
+/* ── MOSQUE PROFILE ───────────────────────────────────────────────────────── */
+.mosque-profile {
+  text-align: center;
+  padding: 1rem 0;
+  margin-bottom: 1rem;
+}
+
+.mosque-logo {
+  max-width: 200px;
+  max-height: 120px;
+  object-fit: contain;
+  margin-bottom: 0.75rem;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.mosque-contact {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.mosque-contact h2 {
+  color: var(--text);
+  font-size: 1.4rem;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+.mosque-contact a {
+  color: var(--green);
+  text-decoration: none;
+}
+
+.mosque-contact a:hover {
+  text-decoration: underline;
+}
+
+/* ── ANNOUNCEMENTS ────────────────────────────────────────────────────────── */
+.announcements-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+}
+
+.announcement {
+  color: var(--gold-text);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  border-left: 3px solid var(--gold);
+}
+
+.announcement:last-child {
+  margin-bottom: 0;
+}
+
+/* ── SECTIONS ──────────────────────────────────────────────────────────────── */
+.section {
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-faint);
+  margin-bottom: 0.75rem;
+  padding-left: 0.25rem;
+}
+
+/* ── RESPONSIVE ───────────────────────────────────────────────────────────── */
+
+/* Large TVs/Monitors - wider sidebars */
+@media (min-width: 1600px) {
+  .app-grid {
+    grid-template-columns: 28% 1fr 28%;
+  }
+}
+
+/* Tablets and smaller screens - hide sidebars, single column */
+@media (max-width: 1200px) {
+  .app-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sponsors-sidebar {
+    display: none;
+  }
+
+  .main-column {
+    padding: 0 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .site-title {
+    font-size: 1.8rem;
+  }
+
+  .countdown {
+    font-size: 2.5rem;
+  }
+
+  .prayer-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+  }
+
+  .prayer-grid .prayer-card:last-child {
+    grid-column: 2;
+  }
+
+  .prayer-time {
+    font-size: 1.25rem;
+  }
+
+  .fasting-time {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .prayer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .prayer-grid .prayer-card:last-child {
+    grid-column: span 2;
+  }
+}

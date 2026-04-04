@@ -73,9 +73,26 @@
             <section id="mosques-section" class="section">
                 <div class="section-header">
                     <h2>Mosques</h2>
+                    <button id="create-mosque-btn" class="btn btn-primary">+ Create Mosque</button>
                 </div>
-                <div class="placeholder">
-                    <p>Mosque management coming soon...</p>
+                <div class="table-container">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>Slug</th>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Website</th>
+                                <th>Default</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mosques-tbody">
+                            <tr class="loading">
+                                <td colspan="6">Loading mosques...</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </section>
 
@@ -84,8 +101,24 @@
                 <div class="section-header">
                     <h2>Pending Changes</h2>
                 </div>
-                <div class="placeholder">
-                    <p>Pending changes management coming soon...</p>
+                <div class="table-container">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Mosque</th>
+                                <th>Submitted By</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pending-tbody">
+                            <tr class="loading">
+                                <td colspan="6">Loading pending changes...</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </section>
         </main>
@@ -146,6 +179,42 @@
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary">Save User</button>
                     <button type="reset" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Mosque Modal -->
+    <div id="mosque-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Mosque</h3>
+                <button class="mosque-modal-close">&times;</button>
+            </div>
+            <form id="mosque-form">
+                <input type="hidden" id="mosque-slug">
+                <div class="form-group">
+                    <label for="mosque-name">Name *</label>
+                    <input type="text" id="mosque-name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="mosque-address">Address</label>
+                    <input type="text" id="mosque-address" name="address">
+                </div>
+                <div class="form-group">
+                    <label for="mosque-phone">Phone</label>
+                    <input type="tel" id="mosque-phone" name="phone">
+                </div>
+                <div class="form-group">
+                    <label for="mosque-website">Website</label>
+                    <input type="url" id="mosque-website" name="website">
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="mosque-fasting" name="show_fasting"> Show Fasting Times</label>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" class="mosque-modal-close-btn btn btn-secondary">Cancel</button>
                 </div>
             </form>
         </div>

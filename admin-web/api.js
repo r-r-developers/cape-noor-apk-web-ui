@@ -1,5 +1,32 @@
 // API Module
 class APIClient {
+    constructor() {
+        this.resolvedBase = window.getResolvedApiBase?.() || '';
+    }
+
+    getBaseCandidates() {
+        const candidates = window.getApiBaseCandidates ? window.getApiBaseCandidates() : [CONFIG.API_BASE_URL];
+        if (this.resolvedBase && candidates.includes(this.resolvedBase)) {
+            return [this.resolvedBase, ...candidates.filter(c => c !== this.resolvedBase)];
+        }
+        return candidates;
+    }
+
+    normalizeUser(raw) {
+        return {
+            id: raw.id,
+            username: raw.username,
+            email: raw.email,
+            role: raw.role,
+            is_active: !!raw.isActive,
+            assignments: (raw.assignments || []).map(a => ({
+                mosque_slug: a.mosqueSlug,
+                mosque_name: a.mosqueName,
+                can_approve: !!a.canApprove
+            }))
+        };
+    }
+
     async request(endpoint, options = {}) {
         const {
             method = 'GET',
@@ -7,42 +34,59 @@ class APIClient {
             headers = {},
             retry = true
         } = options;
-
-        const url = `${CONFIG.API_BASE_URL}${endpoint}`;
         const requestHeaders = {
             ...headers,
             ...auth.getAuthHeaders()
         };
 
-        try {
-            const response = await fetch(url, {
-                method,
-                headers: requestHeaders,
-                body: body ? JSON.stringify(body) : null
-            });
+        let lastError = null;
+        const bases = this.getBaseCandidates();
+        const alreadyResolved = !!this.resolvedBase;
 
-            // Handle 401 - token expired
+        for (const base of bases) {
+            const url = `${base}${endpoint}`;
+            let response;
+            try {
+                response = await fetch(url, {
+                    method,
+                    headers: requestHeaders,
+                    body: body ? JSON.stringify(body) : null
+                });
+            } catch (networkError) {
+                // Network-level failure (CORS, unreachable) – try next base candidate
+                lastError = networkError;
+                continue;
+            }
+
+            // Handle 401 – token expired
             if (response.status === 401 && retry) {
                 const refreshed = await auth.refreshAccessToken();
                 if (refreshed) {
                     return this.request(endpoint, { ...options, retry: false });
-                } else {
-                    window.location.reload();
-                    throw new Error('Session expired');
                 }
+                window.location.reload();
+                throw new Error('Session expired');
             }
 
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.message || `API Error: ${response.status}`);
+                // Only fall back to next base on 404 when the base URL is not yet resolved.
+                // Once the base is known a 404 means the route is genuinely missing on the server.
+                if (response.status === 404 && !alreadyResolved) {
+                    lastError = new Error('API route not found for current base path');
+                    continue;
+                }
+                throw new Error(data.error || `API Error: ${response.status}`);
             }
 
+            this.resolvedBase = base;
+            window.setResolvedApiBase?.(base);
             return data;
-        } catch (error) {
-            console.error('API Error:', error);
-            throw error;
         }
+
+        console.error('API Error:', lastError);
+        throw lastError || new Error('API request failed');
     }
 
     // Users endpoints
@@ -51,11 +95,14 @@ class APIClient {
         if (role) {
             endpoint += `&role=${role}`;
         }
-        return this.request(endpoint);
+        const res = await this.request(endpoint);
+        const users = (res.users || []).map(u => this.normalizeUser(u));
+        return { data: users, total_pages: 1 };
     }
 
     async getUser(id) {
-        return this.request(`/v2/admin/users/${id}`);
+        const res = await this.request(`/v2/admin/users/${id}`);
+        return this.normalizeUser(res.user);
     }
 
     async createUser(userData) {
@@ -80,12 +127,40 @@ class APIClient {
 
     // Mosques endpoints
     async getMosques() {
-        return this.request('/v2/admin/mosques');
+        const res = await this.request('/v2/admin/mosques');
+        return { data: res.mosques || [] };
+    }
+
+    async updateMosque(slug, data) {
+        return this.request(`/v2/admin/mosques/${slug}`, {
+            method: 'PUT',
+            body: data
+        });
+    }
+
+    async deleteMosque(slug) {
+        return this.request(`/v2/admin/mosques/${slug}`, {
+            method: 'DELETE'
+        });
+    }
+
+    async createMosque(mosqueData) {
+        return this.request('/v2/admin/mosques', {
+            method: 'POST',
+            body: mosqueData
+        });
+    }
+
+    async setDefaultMosque(slug) {
+        return this.request(`/v2/admin/mosques/${slug}/set-default`, {
+            method: 'POST'
+        });
     }
 
     // Pending changes endpoints
     async getPendingChanges(page = 1, limit = 20) {
-        return this.request(`/v2/admin/pending-changes?page=${page}&limit=${limit}`);
+        const res = await this.request(`/v2/admin/pending-changes?page=${page}&limit=${limit}`);
+        return { data: res.pending || [] };
     }
 
     async approvePendingChange(id) {
@@ -97,7 +172,7 @@ class APIClient {
     async rejectPendingChange(id, reason = '') {
         return this.request(`/v2/admin/pending-changes/${id}/reject`, {
             method: 'POST',
-            body: { reason }
+            body: { note: reason }
         });
     }
 }

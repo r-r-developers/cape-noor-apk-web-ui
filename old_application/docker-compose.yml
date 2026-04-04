@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+
+  app:
+    build: .
+    container_name: salaah_app
+    ports:
+      - "8080:80"
+    volumes:
+      # Live-mount the app so file edits are reflected without a rebuild
+      - ./public:/var/www/html
+    environment:
+      DB_HOST: db
+      DB_NAME: salaah_times
+      DB_USER: salaah_user
+      DB_PASS: salaah_pass
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    container_name: salaah_db
+    environment:
+      MYSQL_DATABASE: salaah_times
+      MYSQL_USER: salaah_user
+      MYSQL_PASSWORD: salaah_pass
+      MYSQL_ROOT_PASSWORD: rootpassword
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  db_data:

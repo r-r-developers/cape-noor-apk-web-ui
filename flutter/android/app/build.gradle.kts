@@ -5,6 +5,27 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+import java.util.Properties
+
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(keystorePropertiesFile.inputStream())
+}
+
+fun signingValue(propertyKey: String, envKey: String): String? {
+    val fromProperties = keystoreProperties[propertyKey] as String?
+    if (!fromProperties.isNullOrBlank()) return fromProperties
+    val fromEnv = System.getenv(envKey)
+    if (!fromEnv.isNullOrBlank()) return fromEnv
+    return null
+}
+
+val releaseStoreFile = signingValue("storeFile", "CAPE_NOOR_STORE_FILE")
+val releaseStorePassword = signingValue("storePassword", "CAPE_NOOR_STORE_PASSWORD")
+val releaseKeyAlias = signingValue("keyAlias", "CAPE_NOOR_KEY_ALIAS")
+val releaseKeyPassword = signingValue("keyPassword", "CAPE_NOOR_KEY_PASSWORD")
+
 android {
     namespace = "com.salaah.cape_noor"
     compileSdk = flutter.compileSdkVersion
@@ -33,9 +54,24 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Use release key from android/key.properties or environment variables.
+            if (!releaseStoreFile.isNullOrBlank()
+                && !releaseStorePassword.isNullOrBlank()
+                && !releaseKeyAlias.isNullOrBlank()
+                && !releaseKeyPassword.isNullOrBlank()
+            ) {
+                signingConfig = signingConfigs.create("release") {
+                    keyAlias = releaseKeyAlias
+                    keyPassword = releaseKeyPassword
+                    storeFile = file(releaseStoreFile)
+                    storePassword = releaseStorePassword
+                }
+            } else {
+                throw GradleException(
+                    "Missing release signing config. Provide android/key.properties or env vars: " +
+                        "CAPE_NOOR_STORE_FILE, CAPE_NOOR_STORE_PASSWORD, CAPE_NOOR_KEY_ALIAS, CAPE_NOOR_KEY_PASSWORD"
+                )
+            }
         }
     }
 }

@@ -6,6 +6,7 @@ set -e
 PROJECT_DIR="/development/side-projects/salaah-time-fast-duah/flutter"
 KEY_STORE_PATH="$HOME/cape-noor-release-key.jks"
 OUTPUT_DIR="$PROJECT_DIR/build/app/outputs/bundle/release"
+KEY_PROPERTIES_FILE="$PROJECT_DIR/android/key.properties"
 
 # Colors for output
 RED='\033[0;31m'
@@ -16,17 +17,29 @@ NC='\033[0m' # No Color
 echo -e "${YELLOW}Cape Noor - Google Play Store Bundle Builder${NC}"
 echo "=================================================="
 
-# Check if key store exists
-if [ ! -f "$KEY_STORE_PATH" ]; then
-    echo -e "${RED}ERROR: Keystore not found at $KEY_STORE_PATH${NC}"
+# Check signing config
+if [ ! -f "$KEY_PROPERTIES_FILE" ]; then
+    if [[ -n "$CAPE_NOOR_STORE_FILE" && -n "$CAPE_NOOR_STORE_PASSWORD" && -n "$CAPE_NOOR_KEY_ALIAS" && -n "$CAPE_NOOR_KEY_PASSWORD" ]]; then
+        cat > "$KEY_PROPERTIES_FILE" << EOF
+storePassword=$CAPE_NOOR_STORE_PASSWORD
+keyPassword=$CAPE_NOOR_KEY_PASSWORD
+keyAlias=$CAPE_NOOR_KEY_ALIAS
+storeFile=$CAPE_NOOR_STORE_FILE
+EOF
+        echo -e "${GREEN}✓ Created android/key.properties from environment variables${NC}"
+    fi
+fi
+
+if [ ! -f "$KEY_PROPERTIES_FILE" ]; then
+    echo -e "${RED}ERROR: Missing $KEY_PROPERTIES_FILE${NC}"
     echo ""
-    echo "To create a keystore, run:"
-    echo ""
-    echo "keytool -genkey -v -keystore $KEY_STORE_PATH \\"
-    echo "  -keyalg RSA -keysize 2048 -validity 10000 \\"
-    echo "  -alias cape-noor-key \\"
-    echo "  -keypass your_key_password \\"
-    echo "  -storepass your_store_password"
+    echo "Fix one of these ways:"
+    echo "  1) Create android/key.properties from android/key.properties.example"
+    echo "  2) Export env vars before running this script:"
+    echo "     CAPE_NOOR_STORE_FILE"
+    echo "     CAPE_NOOR_STORE_PASSWORD"
+    echo "     CAPE_NOOR_KEY_ALIAS"
+    echo "     CAPE_NOOR_KEY_PASSWORD"
     echo ""
     exit 1
 fi
@@ -38,7 +51,7 @@ export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
 echo -e "${GREEN}✓ Environment configured${NC}"
 echo "  Project: $PROJECT_DIR"
-echo "  Keystore: $KEY_STORE_PATH"
+echo "  key.properties: $KEY_PROPERTIES_FILE"
 echo ""
 
 # Navigate to project

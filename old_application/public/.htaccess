@@ -1,0 +1,37 @@
+Options -Indexes
+DirectoryIndex index.php index.html
+RewriteEngine On
+
+# ── Protect sensitive include files ──────────────────────────────────────────
+# NOTE: Unblock install.php after first run (or re-add it here)
+<FilesMatch "^config\.php$">
+  Require all denied
+</FilesMatch>
+# Protect lib/ directory — block direct HTTP access to any file inside lib/
+# (<DirectoryMatch> is not allowed in .htaccess; use a path-based RewriteRule instead)
+RewriteRule ^lib(/.*)?$  - [F,L]
+
+# Pass HTTP Authorization header through to PHP (needed in some CGI setups)
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# ── Short mosque URLs: /000, /001, … /999 ───────────────────────────────────────
+RewriteRule ^([0-9]{3})/?$ index.php?short_id=$1 [L,QSA]
+
+# ── Mosque slug sub-actions ───────────────────────────────────────────────────
+RewriteRule ^api/admin/mosques/([a-z0-9-]+)/auto-approve/?$ api/admin/mosques.php [L,QSA]
+RewriteRule ^api/admin/mosques/([a-z0-9-]+)/?$              api/admin/mosques.php [L,QSA]
+
+# ── User ID sub-actions ───────────────────────────────────────────────────────
+RewriteRule ^api/admin/users/([0-9]+)/assign/?$ api/admin/users.php [L,QSA]
+RewriteRule ^api/admin/users/([0-9]+)/?$        api/admin/users.php [L,QSA]
+
+# ── Pending changes sub-actions ───────────────────────────────────────────────
+RewriteRule ^api/admin/pending-changes/([0-9]+)/approve/?$ api/admin/pending-changes.php [L,QSA]
+RewriteRule ^api/admin/pending-changes/([0-9]+)/reject/?$  api/admin/pending-changes.php [L,QSA]
+RewriteRule ^api/admin/pending-changes/?$                  api/admin/pending-changes.php [L,QSA]
+
+# ── General rule: serve extensionless PHP files ───────────────────────────────
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.+?)/?$ $1.php [L,QSA]

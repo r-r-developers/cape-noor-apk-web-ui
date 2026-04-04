@@ -21,6 +21,7 @@ class AdminApp {
 
         // Users section
         document.getElementById('create-user-btn').addEventListener('click', () => this.openUserModal());
+        document.getElementById('create-mosque-btn')?.addEventListener('click', () => this.createMosquePrompt());
         document.getElementById('user-form').addEventListener('submit', (e) => this.handleUserFormSubmit(e));
         document.getElementById('add-assignment-btn').addEventListener('click', () => this.addAssignmentRow());
 
@@ -40,6 +41,12 @@ class AdminApp {
         // Confirmation
         document.getElementById('confirm-yes').addEventListener('click', () => this.confirmDelete());
         document.getElementById('confirm-no').addEventListener('click', () => this.closeConfirmModal());
+
+        // Mosque modal
+        document.querySelectorAll('.mosque-modal-close, .mosque-modal-close-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.closeMosqueModal());
+        });
+        document.getElementById('mosque-form')?.addEventListener('submit', (e) => this.handleMosqueFormSubmit(e));
     }
 
     checkAuth() {
@@ -91,7 +98,7 @@ class AdminApp {
         document.querySelector('.admin-container').style.display = 'flex';
     }
 
-    handleNavigation(e) {
+    async handleNavigation(e) {
         e.preventDefault();
         const section = e.target.dataset.section;
 
@@ -102,6 +109,13 @@ class AdminApp {
         // Update sections
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         document.getElementById(`${section}-section`).classList.add('active');
+
+        if (section === 'mosques') {
+            await this.loadMosques();
+        }
+        if (section === 'pending') {
+            await this.loadPendingChanges();
+        }
     }
 
     async loadUsers() {
@@ -159,8 +173,171 @@ class AdminApp {
             const response = await api.getMosques();
             this.mosques = response.data || [];
             this.updateAssignmentOptions();
+            this.renderMosquesTable();
         } catch (error) {
             console.error('Error loading mosques:', error);
+            const tbody = document.getElementById('mosques-tbody');
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="6" style="color: #e74c3c;">Error loading mosques: ${error.message}</td></tr>`;
+            }
+        }
+    }
+
+    renderMosquesTable() {
+        const tbody = document.getElementById('mosques-tbody');
+        if (!tbody) return;
+
+        if (!this.mosques.length) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#7f8c8d;">No mosques found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = this.mosques.map(m => `
+            <tr>
+                <td>${m.slug}</td>
+                <td>${m.name}</td>
+                <td>${m.phone || '<em style="color:#7f8c8d;">-</em>'}</td>
+                <td>${m.website || '<em style="color:#7f8c8d;">-</em>'}</td>
+                <td>${m.isDefault ? '<span class="badge badge-success">Default</span>' : '<span class="badge badge-info">No</span>'}</td>
+                <td style="display:flex;gap:4px;flex-wrap:wrap;">
+                    <button class="btn btn-secondary btn-small" onclick="app.openMosqueEditModal('${m.slug}')">Edit</button>
+                    ${!m.isDefault && auth.user?.role === 'super_admin' ? `<button class="btn btn-secondary btn-small" onclick="app.setDefaultMosque('${m.slug}')">Set Default</button>` : ''}
+                    ${auth.user?.role === 'super_admin' ? `<button class="btn btn-danger btn-small" onclick="app.deleteMosquePrompt('${m.slug}')">Delete</button>` : ''}
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async setDefaultMosque(slug) {
+        try {
+            await api.setDefaultMosque(slug);
+            await this.loadMosques();
+            alert(`Default mosque updated to ${slug}`);
+        } catch (error) {
+            alert('Error setting default mosque: ' + error.message);
+        }
+    }
+
+    async createMosquePrompt() {
+        if (auth.user?.role !== 'super_admin') {
+            alert('Only super_admin can create mosques.');
+            return;
+        }
+
+        const slug = prompt('Mosque slug (lowercase, e.g. green-point):');
+        if (!slug) return;
+        const name = prompt('Mosque name:');
+        if (!name) return;
+
+        try {
+            await api.createMosque({ slug, name });
+            await this.loadMosques();
+            alert('Mosque created successfully');
+        } catch (error) {
+            alert('Error creating mosque: ' + error.message);
+        }
+    }
+
+    openMosqueEditModal(slug) {
+        const mosque = this.mosques.find(m => m.slug === slug);
+        if (!mosque) { alert('Mosque not found'); return; }
+
+        document.getElementById('mosque-slug').value = mosque.slug;
+        document.getElementById('mosque-name').value = mosque.name || '';
+        document.getElementById('mosque-address').value = mosque.address || '';
+        document.getElementById('mosque-phone').value = mosque.phone || '';
+        document.getElementById('mosque-website').value = mosque.website || '';
+        document.getElementById('mosque-fasting').checked = !!mosque.showFasting;
+        document.getElementById('mosque-modal').classList.add('active');
+    }
+
+    closeMosqueModal() {
+        document.getElementById('mosque-modal').classList.remove('active');
+    }
+
+    async handleMosqueFormSubmit(e) {
+        e.preventDefault();
+        const slug = document.getElementById('mosque-slug').value;
+        const data = {
+            name: document.getElementById('mosque-name').value,
+            show_fasting: document.getElementById('mosque-fasting').checked ? 1 : 0,
+        };
+        const address = document.getElementById('mosque-address').value;
+        const phone = document.getElementById('mosque-phone').value;
+        const website = document.getElementById('mosque-website').value;
+        if (address) data.address = address;
+        if (phone) data.phone = phone;
+        if (website) data.website = website;
+
+        try {
+            await api.updateMosque(slug, data);
+            this.closeMosqueModal();
+            await this.loadMosques();
+        } catch (error) {
+            alert('Error updating mosque: ' + error.message);
+        }
+    }
+
+    async deleteMosquePrompt(slug) {
+        if (!confirm(`Delete mosque "${slug}"? This cannot be undone.`)) return;
+        try {
+            await api.deleteMosque(slug);
+            await this.loadMosques();
+        } catch (error) {
+            alert('Error deleting mosque: ' + error.message);
+        }
+    }
+
+    async loadPendingChanges() {
+        const tbody = document.getElementById('pending-tbody');
+        if (!tbody) return;
+
+        try {
+            tbody.innerHTML = '<tr class="loading"><td colspan="6">Loading pending changes...</td></tr>';
+            const response = await api.getPendingChanges(1, 50);
+            const pending = response.data || [];
+
+            if (!pending.length) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#7f8c8d;">No pending changes</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = pending.map(item => `
+                <tr>
+                    <td>${item.id}</td>
+                    <td>${item.mosque_slug}</td>
+                    <td>${item.submitter_name || item.submitted_by || '-'}</td>
+                    <td><span class="badge badge-info">${item.status}</span></td>
+                    <td>${item.created_at || '-'}</td>
+                    <td>
+                        ${item.status === 'pending' ? `
+                            <button class="btn btn-success btn-small" onclick="app.approvePending(${item.id})">Approve</button>
+                            <button class="btn btn-danger btn-small" onclick="app.rejectPending(${item.id})">Reject</button>
+                        ` : '<em style="color:#7f8c8d;">Processed</em>'}
+                    </td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            tbody.innerHTML = `<tr><td colspan="6" style="color:#e74c3c;">Error loading pending changes: ${error.message}</td></tr>`;
+        }
+    }
+
+    async approvePending(id) {
+        try {
+            await api.approvePendingChange(id);
+            await this.loadPendingChanges();
+        } catch (error) {
+            alert('Error approving change: ' + error.message);
+        }
+    }
+
+    async rejectPending(id) {
+        const note = prompt('Optional rejection note:') || '';
+        try {
+            await api.rejectPendingChange(id, note);
+            await this.loadPendingChanges();
+        } catch (error) {
+            alert('Error rejecting change: ' + error.message);
         }
     }
 

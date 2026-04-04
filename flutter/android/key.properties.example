@@ -1,0 +1,7 @@
+# Copy this file to android/key.properties and fill with your upload key values.
+# Do not commit android/key.properties.
+
+storePassword=REPLACE_WITH_STORE_PASSWORD
+keyPassword=REPLACE_WITH_KEY_PASSWORD
+keyAlias=REPLACE_WITH_KEY_ALIAS
+storeFile=/absolute/path/to/your-upload-key.jks
