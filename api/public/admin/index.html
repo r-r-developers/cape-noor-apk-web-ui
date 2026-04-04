@@ -186,32 +186,109 @@
 
     <!-- Edit Mosque Modal -->
     <div id="mosque-modal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width:700px;">
             <div class="modal-header">
-                <h3>Edit Mosque</h3>
+                <h3 id="mosque-modal-title">Edit Mosque</h3>
                 <button class="mosque-modal-close">&times;</button>
             </div>
             <form id="mosque-form">
                 <input type="hidden" id="mosque-slug">
-                <div class="form-group">
-                    <label for="mosque-name">Name *</label>
-                    <input type="text" id="mosque-name" name="name" required>
+
+                <!-- Tab nav -->
+                <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid #2d3748;padding-bottom:8px;flex-wrap:wrap;">
+                    <button type="button" class="mosque-tab btn btn-secondary btn-small active" data-tab="basic">Basic Info</button>
+                    <button type="button" class="mosque-tab btn btn-secondary btn-small" data-tab="display">Display</button>
+                    <button type="button" class="mosque-tab btn btn-secondary btn-small" data-tab="colors">Colors</button>
+                    <button type="button" class="mosque-tab btn btn-secondary btn-small" data-tab="adhan">Adhan Offsets</button>
+                    <button type="button" class="mosque-tab btn btn-secondary btn-small" data-tab="content">Content</button>
                 </div>
-                <div class="form-group">
-                    <label for="mosque-address">Address</label>
-                    <input type="text" id="mosque-address" name="address">
+
+                <!-- Basic Info -->
+                <div class="mosque-tab-panel" id="mosque-tab-basic">
+                    <div class="form-group">
+                        <label for="mosque-name">Name *</label>
+                        <input type="text" id="mosque-name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mosque-logo">Logo URL</label>
+                        <input type="text" id="mosque-logo" name="logo" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label for="mosque-address">Address</label>
+                        <input type="text" id="mosque-address" name="address">
+                    </div>
+                    <div class="form-group">
+                        <label for="mosque-phone">Phone</label>
+                        <input type="tel" id="mosque-phone" name="phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="mosque-website">Website</label>
+                        <input type="text" id="mosque-website" name="website" placeholder="https://...">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="mosque-phone">Phone</label>
-                    <input type="tel" id="mosque-phone" name="phone">
+
+                <!-- Display Settings -->
+                <div class="mosque-tab-panel" id="mosque-tab-display" style="display:none;">
+                    <div class="form-group">
+                        <label><input type="checkbox" id="mosque-fasting" name="show_fasting"> Show Fasting Times</label>
+                    </div>
+                    <div class="form-group">
+                        <label><input type="checkbox" id="mosque-sidebars" name="show_sidebars"> Show Sidebars</label>
+                    </div>
+                    <div class="form-group" id="mosque-auto-approve-row">
+                        <label><input type="checkbox" id="mosque-auto-approve" name="auto_approve"> Auto-Approve Maintainer Changes</label>
+                        <small style="display:block;color:#7f8c8d;">When on, maintainer edits apply immediately without approval.</small>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="mosque-website">Website</label>
-                    <input type="url" id="mosque-website" name="website">
+
+                <!-- Colors -->
+                <div class="mosque-tab-panel" id="mosque-tab-colors" style="display:none;">
+                    <div class="form-group" style="display:flex;align-items:center;gap:12px;">
+                        <label style="min-width:130px;">Primary Green</label>
+                        <input type="color" id="mosque-color-primary" style="width:48px;height:34px;padding:2px;">
+                        <input type="text" id="mosque-color-primary-hex" maxlength="7" placeholder="#22c55e" style="width:100px;">
+                    </div>
+                    <div class="form-group" style="display:flex;align-items:center;gap:12px;">
+                        <label style="min-width:130px;">Gold Accent</label>
+                        <input type="color" id="mosque-color-gold" style="width:48px;height:34px;padding:2px;">
+                        <input type="text" id="mosque-color-gold-hex" maxlength="7" placeholder="#d4af37" style="width:100px;">
+                    </div>
+                    <div class="form-group" style="display:flex;align-items:center;gap:12px;">
+                        <label style="min-width:130px;">Background</label>
+                        <input type="color" id="mosque-color-bg" style="width:48px;height:34px;padding:2px;">
+                        <input type="text" id="mosque-color-bg-hex" maxlength="7" placeholder="#0a0f1a" style="width:100px;">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label><input type="checkbox" id="mosque-fasting" name="show_fasting"> Show Fasting Times</label>
+
+                <!-- Adhan Offsets -->
+                <div class="mosque-tab-panel" id="mosque-tab-adhan" style="display:none;">
+                    <p style="color:#7f8c8d;margin-bottom:12px;">Minute adjustments to prayer times (negative = earlier, positive = later).</p>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div class="form-group"><label>Fajr (min)</label><input type="number" id="adhan-fajr" step="1" placeholder="0"></div>
+                        <div class="form-group"><label>Dhuhr (min)</label><input type="number" id="adhan-dhuhr" step="1" placeholder="0"></div>
+                        <div class="form-group"><label>Asr (min)</label><input type="number" id="adhan-asr" step="1" placeholder="0"></div>
+                        <div class="form-group"><label>Maghrib (min)</label><input type="number" id="adhan-maghrib" step="1" placeholder="0"></div>
+                        <div class="form-group"><label>Isha (min)</label><input type="number" id="adhan-isha" step="1" placeholder="0"></div>
+                    </div>
                 </div>
+
+                <!-- Content -->
+                <div class="mosque-tab-panel" id="mosque-tab-content" style="display:none;">
+                    <div class="form-group">
+                        <label for="mosque-announcements">Announcements (JSON array)</label>
+                        <textarea id="mosque-announcements" rows="5" placeholder='[{"title":"Eid Mubarak","body":"..."}]' style="font-family:monospace;font-size:12px;width:100%;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="mosque-social-media">Social Media (JSON object)</label>
+                        <textarea id="mosque-social-media" rows="4" placeholder='{"facebook":"url","instagram":"url"}' style="font-family:monospace;font-size:12px;width:100%;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="mosque-sponsors">Sponsors (JSON array)</label>
+                        <textarea id="mosque-sponsors" rows="4" placeholder='[{"name":"Sponsor","logo":"url"}]' style="font-family:monospace;font-size:12px;width:100%;"></textarea>
+                    </div>
+                </div>
+
+                <div id="mosque-form-error" style="color:#e74c3c;margin-top:8px;display:none;"></div>
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                     <button type="button" class="mosque-modal-close-btn btn btn-secondary">Cancel</button>

@@ -47,6 +47,16 @@ class AdminApp {
             btn.addEventListener('click', () => this.closeMosqueModal());
         });
         document.getElementById('mosque-form')?.addEventListener('submit', (e) => this.handleMosqueFormSubmit(e));
+
+            // Mosque modal tabs
+            document.querySelectorAll('.mosque-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.mosque-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.mosque-tab-panel').forEach(p => { p.style.display = 'none'; });
+                    tab.classList.add('active');
+                    document.getElementById(`mosque-tab-${tab.dataset.tab}`).style.display = '';
+                });
+            });
     }
 
     checkAuth() {
@@ -242,12 +252,61 @@ class AdminApp {
         const mosque = this.mosques.find(m => m.slug === slug);
         if (!mosque) { alert('Mosque not found'); return; }
 
+        // Reset to first tab
+        document.querySelectorAll('.mosque-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mosque-tab-panel').forEach(p => { p.style.display = 'none'; });
+        document.querySelector('.mosque-tab[data-tab="basic"]').classList.add('active');
+        document.getElementById('mosque-tab-basic').style.display = '';
+
+        // Basic
         document.getElementById('mosque-slug').value = mosque.slug;
         document.getElementById('mosque-name').value = mosque.name || '';
+        document.getElementById('mosque-logo').value = mosque.logo || '';
         document.getElementById('mosque-address').value = mosque.address || '';
         document.getElementById('mosque-phone').value = mosque.phone || '';
         document.getElementById('mosque-website').value = mosque.website || '';
+
+        // Display
         document.getElementById('mosque-fasting').checked = !!mosque.showFasting;
+        document.getElementById('mosque-sidebars').checked = !!mosque.showSidebars;
+        document.getElementById('mosque-auto-approve').checked = !!mosque.autoApprove;
+        // Auto-approve only visible to super_admin
+        document.getElementById('mosque-auto-approve-row').style.display =
+            auth.user?.role === 'super_admin' ? '' : 'none';
+
+        // Colors
+        const setColor = (id, val) => {
+            const hex = val || '#000000';
+            document.getElementById(id).value = hex;
+            document.getElementById(id + '-hex').value = hex;
+        };
+        setColor('mosque-color-primary', mosque.colors?.primary);
+        setColor('mosque-color-gold', mosque.colors?.gold);
+        setColor('mosque-color-bg', mosque.colors?.bg);
+
+        // Sync color picker <-> text input
+        ['primary', 'gold', 'bg'].forEach(key => {
+            const picker = document.getElementById(`mosque-color-${key}`);
+            const text = document.getElementById(`mosque-color-${key}-hex`);
+            picker.oninput = () => { text.value = picker.value; };
+            text.oninput = () => { if (/^#[0-9a-fA-F]{6}$/.test(text.value)) picker.value = text.value; };
+        });
+
+        // Adhan offsets
+        const offsets = mosque.adhanOffsets || {};
+        ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'].forEach(p => {
+            document.getElementById(`adhan-${p}`).value = offsets[p] ?? '';
+        });
+
+        // Content JSON
+        const toJson = v => v && v.length ? JSON.stringify(v, null, 2) : '';
+        document.getElementById('mosque-announcements').value = toJson(mosque.announcements);
+        document.getElementById('mosque-social-media').value =
+            mosque.socialMedia && Object.keys(mosque.socialMedia).length
+                ? JSON.stringify(mosque.socialMedia, null, 2) : '';
+        document.getElementById('mosque-sponsors').value = toJson(mosque.sponsors);
+
+        document.getElementById('mosque-form-error').style.display = 'none';
         document.getElementById('mosque-modal').classList.add('active');
     }
 
@@ -257,24 +316,70 @@ class AdminApp {
 
     async handleMosqueFormSubmit(e) {
         e.preventDefault();
+        const errEl = document.getElementById('mosque-form-error');
+        errEl.style.display = 'none';
         const slug = document.getElementById('mosque-slug').value;
+
+        // Parse JSON fields safely
+        const parseJson = (id) => {
+            const val = document.getElementById(id).value.trim();
+            if (!val) return null;
+            try { return JSON.parse(val); }
+            catch { throw new Error(`Invalid JSON in ${id.replace('mosque-', '').replace('-', ' ')}`); }
+        };
+
+        let announcements, socialMedia, sponsors;
+        try {
+            announcements = parseJson('mosque-announcements');
+            socialMedia = parseJson('mosque-social-media');
+            sponsors = parseJson('mosque-sponsors');
+        } catch (err) {
+            errEl.textContent = err.message;
+            errEl.style.display = 'block';
+            return;
+        }
+
         const data = {
             name: document.getElementById('mosque-name').value,
             show_fasting: document.getElementById('mosque-fasting').checked ? 1 : 0,
+            show_sidebars: document.getElementById('mosque-sidebars').checked ? 1 : 0,
+            color_primary: document.getElementById('mosque-color-primary-hex').value || document.getElementById('mosque-color-primary').value,
+            color_gold: document.getElementById('mosque-color-gold-hex').value || document.getElementById('mosque-color-gold').value,
+            color_bg: document.getElementById('mosque-color-bg-hex').value || document.getElementById('mosque-color-bg').value,
         };
-        const address = document.getElementById('mosque-address').value;
-        const phone = document.getElementById('mosque-phone').value;
-        const website = document.getElementById('mosque-website').value;
+
+        if (auth.user?.role === 'super_admin') {
+            data.auto_approve = document.getElementById('mosque-auto-approve').checked ? 1 : 0;
+        }
+
+        const logo = document.getElementById('mosque-logo').value.trim();
+        const address = document.getElementById('mosque-address').value.trim();
+        const phone = document.getElementById('mosque-phone').value.trim();
+        const website = document.getElementById('mosque-website').value.trim();
+        if (logo) data.logo = logo;
         if (address) data.address = address;
         if (phone) data.phone = phone;
         if (website) data.website = website;
+
+        // Adhan offsets object
+        const offsets = {};
+        ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'].forEach(p => {
+            const v = document.getElementById(`adhan-${p}`).value;
+            if (v !== '') offsets[p] = parseInt(v, 10);
+        });
+        if (Object.keys(offsets).length) data.adhan_offsets = offsets;
+
+        if (announcements !== null) data.announcements = announcements;
+        if (socialMedia !== null) data.social_media = socialMedia;
+        if (sponsors !== null) data.sponsors = sponsors;
 
         try {
             await api.updateMosque(slug, data);
             this.closeMosqueModal();
             await this.loadMosques();
         } catch (error) {
-            alert('Error updating mosque: ' + error.message);
+            errEl.textContent = 'Error: ' + error.message;
+            errEl.style.display = 'block';
         }
     }
 

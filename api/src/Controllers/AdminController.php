@@ -136,7 +136,12 @@ class AdminController extends BaseController
         $body    = $this->body($request);
         $changes = $this->sanitizeMosquePayload($body);
 
-        // Maintainers without auto-approve → pending change
+            // Super admin can toggle auto_approve
+            if ($role === 'super_admin' && array_key_exists('auto_approve', $body)) {
+                $changes['auto_approve'] = (int) (bool) $body['auto_approve'];
+            }
+
+            // Maintainers without auto-approve → pending change
         if ($role === 'maintainer' && !$mosque['auto_approve']) {
             $this->db->execute(
                 'INSERT INTO pending_changes (mosque_slug, submitted_by, changes, status, created_at)
@@ -601,6 +606,7 @@ class AdminController extends BaseController
             'show_fasting', 'show_sidebars', 'color_primary', 'color_gold', 'color_bg',
             'announcements', 'social_media', 'sponsors', 'adhan_offsets',
         ];
+            // auto_approve set only via admin route guards in updateMosque
         return array_intersect_key($body, array_flip($allowed));
     }
 
